@@ -1,9 +1,23 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Sembrando datos de ejemplo...');
+
+  // ── Usuario administrador (para poder hacer login) ─────
+  const adminEmail = 'admin@qunuqalpaca.com';
+  await prisma.usuario.upsert({
+    where: { email: adminEmail },
+    update: {},
+    create: {
+      nombre: 'Administrador',
+      email: adminEmail,
+      passwordHash: await bcrypt.hash('admin123', 10),
+      rol: 'ADMIN',
+    },
+  });
 
   // ── Catálogos del configurador "Diseña tu tejido" ──────
   const fibras = [

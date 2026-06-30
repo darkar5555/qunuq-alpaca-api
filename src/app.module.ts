@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { ProductosModule } from './productos/productos.module';
@@ -19,6 +23,7 @@ import { InsumosModule } from './insumos/insumos.module';
     // Infraestructura.
     PrismaModule,
     HealthModule,
+    AuthModule,
 
     // Un módulo por dominio.
     UsuariosModule,
@@ -29,6 +34,12 @@ import { InsumosModule } from './insumos/insumos.module';
     ComprobantesModule,
     PagosModule,
     InsumosModule,
+  ],
+  providers: [
+    // Guards globales: 1) exige token JWT, 2) verifica el rol.
+    // Toda la API queda protegida salvo lo marcado con @Public().
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}
