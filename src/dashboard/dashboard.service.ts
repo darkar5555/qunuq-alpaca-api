@@ -2,12 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { EstadoPedido, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
-const ESTADOS: EstadoPedido[] = [
-  'COTIZACION',
-  'MUESTRA',
-  'PRODUCCION',
-  'ENTREGADO',
-];
+// Una cotización aún no es una venta: solo contamos pedidos confirmados
+// (muestra, producción o entregado) al calcular montos de ventas.
+const SOLO_VENTAS: Prisma.PedidoWhereInput = {
+  estado: { not: 'COTIZACION' },
+};
 
 @Injectable()
 export class DashboardService {
@@ -24,7 +23,7 @@ export class DashboardService {
         this.prisma.producto.count({ where: { activo: true } }),
         this.prisma.pedido.groupBy({ by: ['estado'], _count: true }),
         this.prisma.pedido.aggregate({
-          where: { fecha: { gte: inicioMes } },
+          where: { fecha: { gte: inicioMes }, ...SOLO_VENTAS },
           _sum: { total: true },
           _count: true,
         }),
@@ -75,7 +74,7 @@ export class DashboardService {
     );
 
     const pedidos = await this.prisma.pedido.findMany({
-      where: { fecha: { gte: desde } },
+      where: { fecha: { gte: desde }, ...SOLO_VENTAS },
       select: { fecha: true, total: true },
     });
 
