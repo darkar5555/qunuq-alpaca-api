@@ -12,6 +12,7 @@ import { ProductosModule } from './productos/productos.module';
 import { CatalogosModule } from './catalogos/catalogos.module';
 import { PedidosModule } from './pedidos/pedidos.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ContenidoModule } from './contenido/contenido.module';
 import { ComprobantesModule } from './comprobantes/comprobantes.module';
 import { PagosModule } from './pagos/pagos.module';
 import { InsumosModule } from './insumos/insumos.module';
@@ -33,6 +34,7 @@ import { InsumosModule } from './insumos/insumos.module';
     CatalogosModule,
     PedidosModule,
     DashboardModule,
+    ContenidoModule,
     ComprobantesModule,
     PagosModule,
     InsumosModule,

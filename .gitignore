@@ -20,3 +20,7 @@ prisma/*.db
 .DS_Store
 .idea
 .vscode
+
+# Imágenes subidas (local)
+uploads/*
+!uploads/.gitkeep

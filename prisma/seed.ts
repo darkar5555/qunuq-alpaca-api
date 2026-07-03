@@ -129,6 +129,34 @@ async function main() {
     },
   });
 
+  // ── Contenido editable de la landing (textos iniciales) ──
+  const contenido = [
+    { clave: 'hero.eyebrow', grupo: 'hero', etiqueta: 'Hero · Etiqueta', tipo: 'texto', orden: 1, valor: 'Tejidos a tu medida' },
+    { clave: 'hero.titulo', grupo: 'hero', etiqueta: 'Hero · Título', tipo: 'texto', orden: 2, valor: 'Tu tejido de alpaca, hecho como lo imaginas' },
+    { clave: 'hero.lead', grupo: 'hero', etiqueta: 'Hero · Texto', tipo: 'multilinea', orden: 3, valor: 'Tejemos en alpaca, baby alpaca y fibras naturales. Eliges fibra, color y técnica; nosotros lo producimos en pequeños lotes, con acabado artesanal.' },
+    { clave: 'about.eyebrow', grupo: 'about', etiqueta: 'Nosotros · Etiqueta', tipo: 'texto', orden: 1, valor: 'Quiénes somos' },
+    { clave: 'about.titulo', grupo: 'about', etiqueta: 'Nosotros · Título', tipo: 'texto', orden: 2, valor: 'Un taller, no una fábrica' },
+    { clave: 'about.parrafo1', grupo: 'about', etiqueta: 'Nosotros · Párrafo 1', tipo: 'multilinea', orden: 3, valor: 'Somos un equipo pequeño de Arequipa que teje a pedido. Eso nos permite hacer lo que las grandes no pueden: pedidos chicos, colores a medida y trato directo contigo en cada paso.' },
+    { clave: 'about.parrafo2', grupo: 'about', etiqueta: 'Nosotros · Párrafo 2', tipo: 'multilinea', orden: 4, valor: 'Trabajamos con fibras nobles —alpaca, baby alpaca, pima— y cuidamos el acabado de cada pieza, porque tu marca también se siente al tacto.' },
+    { clave: 'contacto.titulo', grupo: 'contacto', etiqueta: 'Contacto · Título', tipo: 'texto', orden: 1, valor: 'Hablemos de tu proyecto' },
+    { clave: 'contacto.subtitulo', grupo: 'contacto', etiqueta: 'Contacto · Subtítulo', tipo: 'multilinea', orden: 2, valor: 'Cuéntanos qué necesitas y te enviamos una cotización sin compromiso.' },
+    { clave: 'contacto.direccion', grupo: 'contacto', etiqueta: 'Contacto · Dirección', tipo: 'texto', orden: 3, valor: 'Jr. Alfonso Ugarte 112, La Tomilla, Cayma, Arequipa' },
+    { clave: 'contacto.telefono', grupo: 'contacto', etiqueta: 'Contacto · Teléfono', tipo: 'texto', orden: 4, valor: '+51 993 064 492' },
+    { clave: 'contacto.whatsapp', grupo: 'contacto', etiqueta: 'Contacto · WhatsApp (solo números)', tipo: 'texto', orden: 5, valor: '51993064492' },
+    { clave: 'contacto.email', grupo: 'contacto', etiqueta: 'Contacto · Correo', tipo: 'texto', orden: 6, valor: 'qunuqalpaca@hotmail.com' },
+    { clave: 'contacto.horario', grupo: 'contacto', etiqueta: 'Contacto · Horario', tipo: 'texto', orden: 7, valor: 'Lunes a viernes · 9:00 – 18:00' },
+    { clave: 'redes.instagram', grupo: 'redes', etiqueta: 'Redes · Instagram (URL)', tipo: 'url', orden: 1, valor: '' },
+    { clave: 'redes.facebook', grupo: 'redes', etiqueta: 'Redes · Facebook (URL)', tipo: 'url', orden: 2, valor: '' },
+  ];
+  for (const c of contenido) {
+    // update vacío: no pisa lo que el usuario haya editado en el ERP.
+    await prisma.contenidoSitio.upsert({
+      where: { clave: c.clave },
+      update: {},
+      create: c,
+    });
+  }
+
   // Conteos finales
   const [nFibras, nColores, nTecnicas, nProductos, nClientes] = await Promise.all([
     prisma.fibra.count(),

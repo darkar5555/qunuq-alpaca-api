@@ -252,3 +252,33 @@ model MovimientoInventario {
 
   @@map("movimientos_inventario")
 }
+
+// ── Contenido editable de la landing (mini CMS) ──────────
+
+// Textos editables (hero, sobre nosotros, contacto, redes...).
+// Modelo clave-valor: la landing lee por `clave`, el ERP edita por grupo.
+model ContenidoSitio {
+  id        String   @id @default(uuid())
+  clave     String   @unique // p.ej. hero.titulo, contacto.telefono
+  valor     String // el texto en sí
+  grupo     String // hero | about | contacto | redes
+  etiqueta  String // nombre legible para el ERP
+  tipo      String   @default("texto") // texto | multilinea | url
+  orden     Int      @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("contenido_sitio")
+}
+
+// Imágenes del sitio (hero, galería, tarjetas de productos).
+model ImagenSitio {
+  id        String   @id @default(uuid())
+  seccion   String // hero | galeria | producto
+  url       String // ruta servida por la API (/uploads/...)
+  titulo    String? // texto alternativo / descripción
+  orden     Int      @default(0)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("imagenes_sitio")
+}
