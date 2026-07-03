@@ -83,6 +83,70 @@ export class ContenidoService {
     return imagen;
   }
 
+  // ── Tarjetas "Qué tejemos" ──────────────────────────
+  listarTarjetas() {
+    return this.prisma.tarjetaProducto.findMany({ orderBy: { orden: 'asc' } });
+  }
+
+  listarTarjetasPublicas() {
+    return this.prisma.tarjetaProducto.findMany({
+      where: { activo: true },
+      orderBy: { orden: 'asc' },
+    });
+  }
+
+  crearTarjeta(data: { titulo: string; descripcion: string }) {
+    return this.prisma.tarjetaProducto.create({ data });
+  }
+
+  async actualizarTarjeta(
+    id: string,
+    data: {
+      titulo?: string;
+      descripcion?: string;
+      orden?: number;
+      activo?: boolean;
+    },
+  ) {
+    await this.buscarTarjeta(id);
+    return this.prisma.tarjetaProducto.update({ where: { id }, data });
+  }
+
+  // Cambia la foto de una tarjeta y borra la anterior (si era local).
+  async setImagenTarjeta(id: string, url: string) {
+    const tarjeta = await this.buscarTarjeta(id);
+    if (tarjeta.imagenUrl?.startsWith('/uploads/')) {
+      await unlink(join(process.cwd(), tarjeta.imagenUrl)).catch(
+        () => undefined,
+      );
+    }
+    return this.prisma.tarjetaProducto.update({
+      where: { id },
+      data: { imagenUrl: url },
+    });
+  }
+
+  async eliminarTarjeta(id: string) {
+    const tarjeta = await this.buscarTarjeta(id);
+    await this.prisma.tarjetaProducto.delete({ where: { id } });
+    if (tarjeta.imagenUrl?.startsWith('/uploads/')) {
+      await unlink(join(process.cwd(), tarjeta.imagenUrl)).catch(
+        () => undefined,
+      );
+    }
+    return { mensaje: 'Tarjeta eliminada' };
+  }
+
+  private async buscarTarjeta(id: string) {
+    const tarjeta = await this.prisma.tarjetaProducto.findUnique({
+      where: { id },
+    });
+    if (!tarjeta) {
+      throw new NotFoundException('Tarjeta no encontrada');
+    }
+    return tarjeta;
+  }
+
   // ── Catálogo público (para el configurador de la landing) ──
   async catalogoPublico() {
     const [fibras, colores, tecnicas, productos] = await Promise.all([

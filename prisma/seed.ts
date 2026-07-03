@@ -138,6 +138,9 @@ async function main() {
     { clave: 'about.titulo', grupo: 'about', etiqueta: 'Nosotros · Título', tipo: 'texto', orden: 2, valor: 'Un taller, no una fábrica' },
     { clave: 'about.parrafo1', grupo: 'about', etiqueta: 'Nosotros · Párrafo 1', tipo: 'multilinea', orden: 3, valor: 'Somos un equipo pequeño de Arequipa que teje a pedido. Eso nos permite hacer lo que las grandes no pueden: pedidos chicos, colores a medida y trato directo contigo en cada paso.' },
     { clave: 'about.parrafo2', grupo: 'about', etiqueta: 'Nosotros · Párrafo 2', tipo: 'multilinea', orden: 4, valor: 'Trabajamos con fibras nobles —alpaca, baby alpaca, pima— y cuidamos el acabado de cada pieza, porque tu marca también se siente al tacto.' },
+    { clave: 'tejidos.eyebrow', grupo: 'tejidos', etiqueta: 'Qué tejemos · Etiqueta', tipo: 'texto', orden: 1, valor: 'Qué tejemos' },
+    { clave: 'tejidos.titulo', grupo: 'tejidos', etiqueta: 'Qué tejemos · Título', tipo: 'texto', orden: 2, valor: 'Una sola fábrica de ideas, muchos tejidos' },
+    { clave: 'tejidos.subtitulo', grupo: 'tejidos', etiqueta: 'Qué tejemos · Subtítulo', tipo: 'multilinea', orden: 3, valor: 'Desde la tela por metro hasta la prenda terminada, todo se puede personalizar.' },
     { clave: 'contacto.titulo', grupo: 'contacto', etiqueta: 'Contacto · Título', tipo: 'texto', orden: 1, valor: 'Hablemos de tu proyecto' },
     { clave: 'contacto.subtitulo', grupo: 'contacto', etiqueta: 'Contacto · Subtítulo', tipo: 'multilinea', orden: 2, valor: 'Cuéntanos qué necesitas y te enviamos una cotización sin compromiso.' },
     { clave: 'contacto.direccion', grupo: 'contacto', etiqueta: 'Contacto · Dirección', tipo: 'texto', orden: 3, valor: 'Jr. Alfonso Ugarte 112, La Tomilla, Cayma, Arequipa' },
@@ -154,6 +157,18 @@ async function main() {
       where: { clave: c.clave },
       update: {},
       create: c,
+    });
+  }
+
+  // ── Tarjetas iniciales de "Qué tejemos" ──
+  if ((await prisma.tarjetaProducto.count()) === 0) {
+    await prisma.tarjetaProducto.createMany({
+      data: [
+        { titulo: 'Telas', descripcion: 'Plano, dobby y jacquard en distintos pesos.', imagenUrl: 'https://loremflickr.com/640/480/wool,fabric?lock=31', orden: 1 },
+        { titulo: 'Tejido de punto', descripcion: 'Chompas, intarsia y trenzados a galga fina.', imagenUrl: 'https://loremflickr.com/640/480/knitting,wool?lock=32', orden: 2 },
+        { titulo: 'Accesorios', descripcion: 'Chalinas, gorros y estolas de tacto suave.', imagenUrl: 'https://loremflickr.com/640/480/scarf,wool?lock=33', orden: 3 },
+        { titulo: 'Línea hogar', descripcion: 'Mantas, cojines y throws para abrigar.', imagenUrl: 'https://loremflickr.com/640/480/blanket,textile?lock=34', orden: 4 },
+      ],
     });
   }
 

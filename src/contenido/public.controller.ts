@@ -25,4 +25,10 @@ export class PublicController {
   imagenes(@Query('seccion') seccion?: string) {
     return this.contenido.listarImagenesPublicas(seccion);
   }
+
+  // Tarjetas activas de "Qué tejemos".
+  @Get('tarjetas')
+  tarjetas() {
+    return this.contenido.listarTarjetasPublicas();
+  }
 }
