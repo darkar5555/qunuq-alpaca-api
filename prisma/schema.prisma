@@ -53,6 +53,13 @@ enum MetodoPago {
   PLIN
 }
 
+enum EstadoSolicitud {
+  NUEVA
+  ATENDIDA
+  CONVERTIDA
+  DESCARTADA
+}
+
 // ── Acceso al ERP ────────────────────────────────────────
 
 model Usuario {
@@ -281,6 +288,22 @@ model ImagenSitio {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("imagenes_sitio")
+}
+
+// Solicitudes de cotización que llegan desde la landing (bandeja del ERP).
+model Solicitud {
+  id        String          @id @default(uuid())
+  nombre    String
+  email     String?
+  telefono  String?
+  interes   String? // tipo de tejido / interés
+  mensaje   String?
+  diseno    String? // resumen del configurador (fibra · color · técnica)
+  origen    String          @default("formulario") // formulario | configurador
+  estado    EstadoSolicitud @default(NUEVA)
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  @@map("solicitudes")
 }
 
 // Tarjetas editables de la sección "Qué tejemos" de la landing.

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
@@ -13,6 +14,7 @@ import { CatalogosModule } from './catalogos/catalogos.module';
 import { PedidosModule } from './pedidos/pedidos.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ContenidoModule } from './contenido/contenido.module';
+import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { ComprobantesModule } from './comprobantes/comprobantes.module';
 import { PagosModule } from './pagos/pagos.module';
 import { InsumosModule } from './insumos/insumos.module';
@@ -21,6 +23,9 @@ import { InsumosModule } from './insumos/insumos.module';
   imports: [
     // Carga el .env y expone ConfigService de forma global.
     ConfigModule.forRoot({ isGlobal: true }),
+
+    // Límite anti-spam por defecto (se aplica al endpoint público de solicitudes).
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 5 }]),
 
     // Infraestructura.
     PrismaModule,
@@ -35,6 +40,7 @@ import { InsumosModule } from './insumos/insumos.module';
     PedidosModule,
     DashboardModule,
     ContenidoModule,
+    SolicitudesModule,
     ComprobantesModule,
     PagosModule,
     InsumosModule,

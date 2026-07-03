@@ -172,6 +172,30 @@ async function main() {
     });
   }
 
+  // ── Solicitudes de ejemplo (bandeja del ERP) ──
+  if ((await prisma.solicitud.count()) === 0) {
+    await prisma.solicitud.createMany({
+      data: [
+        {
+          nombre: 'Lucía Fernández',
+          email: 'lucia@ejemplo.com',
+          telefono: '+51 987 654 321',
+          interes: 'Accesorios',
+          mensaje: 'Quisiera 20 chalinas para mi tienda, ¿precio por mayor?',
+          diseno: 'Alpaca Baby · Gris Plata · Punto a mano',
+          origen: 'configurador',
+        },
+        {
+          nombre: 'Carlos Ramos',
+          email: 'carlos@ejemplo.com',
+          interes: 'Línea hogar',
+          mensaje: 'Necesito mantas personalizadas para un hotel.',
+          origen: 'formulario',
+        },
+      ],
+    });
+  }
+
   // Conteos finales
   const [nFibras, nColores, nTecnicas, nProductos, nClientes] = await Promise.all([
     prisma.fibra.count(),
