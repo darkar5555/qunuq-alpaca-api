@@ -1,0 +1,62 @@
+# Stack de producción de Qunuq Alpaca en un solo droplet.
+#   db    → PostgreSQL 16
+#   api   → NestJS (aplica migraciones al arrancar)
+#   caddy → reverse proxy + sirve las 2 apps Angular + HTTPS automático
+#
+# Las variables vienen del archivo .env que está junto a este archivo
+# (crea el tuyo a partir de .env.production.example — NO se sube a git).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      PORT: "3000"
+    volumes:
+      - uploads:/app/uploads
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Builds estáticos de las apps Angular (los subes por rsync/scp)
+      - /opt/qunuq/www/landing:/srv/landing:ro
+      - /opt/qunuq/www/erp:/srv/erp:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

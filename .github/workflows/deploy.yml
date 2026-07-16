@@ -1,0 +1,36 @@
+name: Desplegar API (VPS)
+
+# Sube el código al droplet y reconstruye los contenedores (db + api + caddy).
+# Prisma aplica las migraciones pendientes al arrancar el contenedor de la API.
+# Se dispara al hacer push a main (o manualmente).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "${{ secrets.DEPLOY_PORT || '22' }}" -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Subir código al droplet
+        run: |
+          rsync -avz --delete \
+            --exclude='.git' --exclude='node_modules' --exclude='dist' \
+            --exclude='.env' --exclude='uploads' \
+            -e "ssh -i ~/.ssh/id_deploy -p ${{ secrets.DEPLOY_PORT || '22' }}" \
+            ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/qunuq/qunuq-alpaca-api/"
+
+      - name: Reconstruir y levantar contenedores
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "${{ secrets.DEPLOY_PORT || '22' }}" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "cd /opt/qunuq/qunuq-alpaca-api && docker compose up -d --build && docker image prune -f"

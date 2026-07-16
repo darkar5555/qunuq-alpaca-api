@@ -1,0 +1,28 @@
+# Caddy saca y renueva los certificados HTTPS solo (Let's Encrypt).
+# Requiere que los dominios ya apunten (DNS) a la IP del droplet y los puertos 80/443 abiertos.
+
+{
+	# Email para los avisos de Let's Encrypt
+	email qunuqalpaca@hotmail.com
+}
+
+# ── Landing (sitio público) ──
+qunuqalpaca.com, www.qunuqalpaca.com {
+	encode gzip
+	root * /srv/landing
+	try_files {path} /index.html
+	file_server
+}
+
+# ── ERP (app interna) ──
+erp.qunuqalpaca.com {
+	encode gzip
+	root * /srv/erp
+	try_files {path} /index.html
+	file_server
+}
+
+# ── API (NestJS) ──
+api.qunuqalpaca.com {
+	reverse_proxy api:3000
+}
