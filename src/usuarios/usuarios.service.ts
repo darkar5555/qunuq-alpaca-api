@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
@@ -82,6 +83,26 @@ export class UsuariosService {
       data,
       select: PUBLIC_FIELDS,
     });
+  }
+
+  // Cambio de la propia contraseña: exige y verifica la contraseña actual.
+  async cambiarPassword(id: string, actual: string, nueva: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { id } });
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const ok = await bcrypt.compare(actual, usuario.passwordHash);
+    if (!ok) {
+      throw new UnauthorizedException('La contraseña actual no es correcta');
+    }
+
+    const passwordHash = await bcrypt.hash(nueva, SALT_ROUNDS);
+    await this.prisma.usuario.update({
+      where: { id },
+      data: { passwordHash },
+    });
+    return { mensaje: 'Contraseña actualizada' };
   }
 
   // Baja lógica: desactivamos en vez de borrar (preserva el historial).

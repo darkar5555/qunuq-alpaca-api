@@ -24,3 +24,6 @@ prisma/*.db
 # Imágenes subidas (local)
 uploads/*
 !uploads/.gitkeep
+
+# TypeScript incremental cache
+*.tsbuildinfo

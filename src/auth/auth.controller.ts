@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
   CurrentUser,
   UsuarioAutenticado,
 } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
+import { CambiarPasswordDto } from './dto/cambiar-password.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
@@ -22,5 +23,14 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: UsuarioAutenticado) {
     return user;
+  }
+
+  // Cualquier usuario autenticado cambia su propia contraseña.
+  @Patch('me/password')
+  cambiarPassword(
+    @CurrentUser() user: UsuarioAutenticado,
+    @Body() dto: CambiarPasswordDto,
+  ) {
+    return this.authService.cambiarPassword(user.id, dto);
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { UsuariosService } from '../usuarios/usuarios.service';
+import { CambiarPasswordDto } from './dto/cambiar-password.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
@@ -34,5 +35,14 @@ export class AuthService {
         rol: usuario.rol,
       },
     };
+  }
+
+  // El usuario autenticado cambia su propia contraseña.
+  cambiarPassword(userId: string, dto: CambiarPasswordDto) {
+    return this.usuarios.cambiarPassword(
+      userId,
+      dto.passwordActual,
+      dto.passwordNueva,
+    );
   }
 }
