@@ -26,11 +26,23 @@ const PEDIDO_INCLUDE = {
   items: {
     include: { producto: true, fibra: true, color: true, tecnica: true },
   },
+  pagos: { orderBy: { fecha: 'desc' } },
 } satisfies Prisma.PedidoInclude;
+
+type PedidoConPagos = Prisma.PedidoGetPayload<{ include: typeof PEDIDO_INCLUDE }>;
 
 @Injectable()
 export class PedidosService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // Agrega los campos calculados de cobranza: pagado y saldo.
+  private conSaldo(pedido: PedidoConPagos) {
+    const pagado = pedido.pagos
+      .reduce((acc, p) => acc.add(p.monto), new Prisma.Decimal(0))
+      .toDecimalPlaces(2);
+    const saldo = pedido.total.sub(pagado).toDecimalPlaces(2);
+    return { ...pedido, pagado, saldo };
+  }
 
   async create(dto: CreatePedidoDto) {
     // 1. El cliente debe existir.
@@ -84,7 +96,7 @@ export class PedidosService {
     const total = subtotal.add(igv).toDecimalPlaces(2);
 
     // 5. Generamos el correlativo y creamos todo en una transacción.
-    return this.prisma.$transaction(async (tx) => {
+    const pedido = await this.prisma.$transaction(async (tx) => {
       const count = await tx.pedido.count();
       const codigo = `PED-${String(count + 1).padStart(4, '0')}`;
       return tx.pedido.create({
@@ -100,10 +112,11 @@ export class PedidosService {
         include: PEDIDO_INCLUDE,
       });
     });
+    return this.conSaldo(pedido);
   }
 
-  findAll(filtros?: { estado?: EstadoPedido; clienteId?: string }) {
-    return this.prisma.pedido.findMany({
+  async findAll(filtros?: { estado?: EstadoPedido; clienteId?: string }) {
+    const pedidos = await this.prisma.pedido.findMany({
       where: {
         estado: filtros?.estado,
         clienteId: filtros?.clienteId,
@@ -111,6 +124,7 @@ export class PedidosService {
       include: PEDIDO_INCLUDE,
       orderBy: { fecha: 'desc' },
     });
+    return pedidos.map((p) => this.conSaldo(p));
   }
 
   async findOne(id: string) {
@@ -121,16 +135,17 @@ export class PedidosService {
     if (!pedido) {
       throw new NotFoundException('Pedido no encontrado');
     }
-    return pedido;
+    return this.conSaldo(pedido);
   }
 
   async update(id: string, dto: UpdatePedidoDto) {
     await this.findOne(id);
-    return this.prisma.pedido.update({
+    const pedido = await this.prisma.pedido.update({
       where: { id },
       data: { notas: dto.notas },
       include: PEDIDO_INCLUDE,
     });
+    return this.conSaldo(pedido);
   }
 
   async cambiarEstado(id: string, nuevo: EstadoPedido) {
@@ -146,11 +161,12 @@ export class PedidosService {
       );
     }
 
-    return this.prisma.pedido.update({
+    const actualizado = await this.prisma.pedido.update({
       where: { id },
       data: { estado: nuevo },
       include: PEDIDO_INCLUDE,
     });
+    return this.conSaldo(actualizado);
   }
 
   async remove(id: string) {
