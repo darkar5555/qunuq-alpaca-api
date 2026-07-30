@@ -1,0 +1,20 @@
+# PostgreSQL SOLO para desarrollo local (no se usa en producción).
+# Levantar:   docker compose -f docker-compose.dev.yml up -d
+# Detener:    docker compose -f docker-compose.dev.yml down
+# La API se corre aparte con: pnpm start:dev
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: qunuq_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: qunuq_alpaca
+    ports:
+      - "5432:5432"
+    volumes:
+      - qunuq_pgdata_dev:/var/lib/postgresql/data
+
+volumes:
+  qunuq_pgdata_dev:
