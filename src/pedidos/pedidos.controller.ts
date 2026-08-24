@@ -7,16 +7,22 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import { EstadoPedido, RolUsuario } from '@prisma/client';
+import type { Response } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CotizacionPdfService } from './cotizacion-pdf.service';
 import { CreatePedidoDto } from './dto/create-pedido.dto';
 import { UpdateEstadoDto, UpdatePedidoDto } from './dto/update-pedido.dto';
 import { PedidosService } from './pedidos.service';
 
 @Controller('pedidos')
 export class PedidosController {
-  constructor(private readonly pedidosService: PedidosService) {}
+  constructor(
+    private readonly pedidosService: PedidosService,
+    private readonly cotizacionPdf: CotizacionPdfService,
+  ) {}
 
   // Lectura: cualquier usuario autenticado. Filtros opcionales por query.
   @Get()
@@ -30,6 +36,20 @@ export class PedidosController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.pedidosService.findOne(id);
+  }
+
+  // Descarga la cotización del pedido en PDF: admin y ventas.
+  @Roles(RolUsuario.ADMIN, RolUsuario.VENTAS)
+  @Get(':id/cotizacion')
+  async cotizacion(@Param('id') id: string, @Res() res: Response) {
+    const pedido = await this.pedidosService.findOne(id);
+    const doc = this.cotizacionPdf.generar(pedido);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="cotizacion-${pedido.codigo}.pdf"`,
+    });
+    doc.pipe(res);
+    doc.end();
   }
 
   // Crear pedido: admin y ventas.
