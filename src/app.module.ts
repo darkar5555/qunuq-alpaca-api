@@ -18,6 +18,7 @@ import { SolicitudesModule } from './solicitudes/solicitudes.module';
 import { ComprobantesModule } from './comprobantes/comprobantes.module';
 import { PagosModule } from './pagos/pagos.module';
 import { InsumosModule } from './insumos/insumos.module';
+import { PersonalModule } from './personal/personal.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { InsumosModule } from './insumos/insumos.module';
     ComprobantesModule,
     PagosModule,
     InsumosModule,
+    PersonalModule,
   ],
   providers: [
     // Guards globales: 1) exige token JWT, 2) verifica el rol.

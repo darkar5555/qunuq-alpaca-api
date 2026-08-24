@@ -164,6 +164,7 @@ model Pedido {
   items        PedidoItem[]
   comprobantes Comprobante[]
   pagos        Pago[]
+  pagosPersonal PagoPersonal[]
 
   @@map("pedidos")
 }
@@ -317,4 +318,39 @@ model TarjetaProducto {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("tarjetas_producto")
+}
+
+// ── Personal del taller (Fase: pagos al personal) ────────
+
+model Trabajador {
+  id              String    @id @default(uuid())
+  nombre          String
+  numeroDocumento String?   @map("numero_documento") // DNI (opcional)
+  telefono        String?
+  oficio          String // tejedora, hilandera, acabados, etc.
+  activo          Boolean   @default(true)
+  fechaIngreso    DateTime? @map("fecha_ingreso")
+  notas           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  pagos PagoPersonal[]
+
+  @@map("trabajadores")
+}
+
+model PagoPersonal {
+  id           String     @id @default(uuid())
+  trabajadorId String     @map("trabajador_id")
+  pedidoId     String?    @map("pedido_id") // opcional: costo de mano de obra por pedido
+  monto        Decimal    @db.Decimal(10, 2)
+  metodo       MetodoPago
+  concepto     String // "Semana 18-24 ago", "Adelanto", "3 chompas PED-0012"...
+  fecha        DateTime   @default(now())
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  trabajador Trabajador @relation(fields: [trabajadorId], references: [id])
+  pedido     Pedido?    @relation(fields: [pedidoId], references: [id])
+
+  @@map("pagos_personal")
 }
