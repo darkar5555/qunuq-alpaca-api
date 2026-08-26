@@ -354,3 +354,25 @@ model PagoPersonal {
 
   @@map("pagos_personal")
 }
+
+// ── Gastos del negocio (control financiero) ─────────────
+
+enum TipoGasto {
+  FIJO // "pasivo": recurrente (alquiler, luz, agua, internet)
+  VARIABLE // "activo": según la actividad (fibra, transporte, etc.)
+}
+
+model Gasto {
+  id          String     @id @default(uuid())
+  fecha       DateTime   @default(now())
+  monto       Decimal    @db.Decimal(10, 2)
+  metodo      MetodoPago
+  tipo        TipoGasto
+  categoria   String // materia prima, servicios, alquiler, transporte...
+  descripcion String
+  proveedor   String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("gastos")
+}
