@@ -43,10 +43,25 @@ export class GastosService {
       );
     }
 
+    // Pagos al personal del mismo periodo: se registran en el módulo Personal
+    // y aquí solo se muestran/suman (no se duplican como gastos).
+    const agregadoPersonal = await this.prisma.pagoPersonal.aggregate({
+      _sum: { monto: true },
+      where: {
+        fecha: {
+          gte: filtros.desde ? new Date(`${filtros.desde}T00:00:00`) : undefined,
+          lte: filtros.hasta ? new Date(`${filtros.hasta}T23:59:59.999`) : undefined,
+        },
+      },
+    });
+    const pagosPersonal = agregadoPersonal._sum.monto ?? cero;
+
     return {
       filtros,
       cantidad: gastos.length,
       total,
+      pagosPersonal,
+      egresosTotales: total.add(pagosPersonal),
       porTipo,
       porCategoria: [...porCategoria.entries()]
         .map(([categoria, monto]) => ({ categoria, monto }))
