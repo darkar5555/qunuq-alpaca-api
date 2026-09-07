@@ -13,26 +13,43 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Números clave para la portada del ERP.
-  async resumen() {
+  async resumen(rol?: string) {
     const ahora = new Date();
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
 
-    const [totalClientes, productosActivos, agrupado, ventasMes, recientes] =
-      await Promise.all([
-        this.prisma.cliente.count(),
-        this.prisma.producto.count({ where: { activo: true } }),
-        this.prisma.pedido.groupBy({ by: ['estado'], _count: true }),
-        this.prisma.pedido.aggregate({
-          where: { fecha: { gte: inicioMes }, ...SOLO_VENTAS },
-          _sum: { total: true },
-          _count: true,
-        }),
-        this.prisma.pedido.findMany({
-          take: 5,
-          orderBy: { fecha: 'desc' },
-          include: { cliente: { select: { nombreORazonSocial: true } } },
-        }),
-      ]);
+    const [
+      totalClientes,
+      productosActivos,
+      agrupado,
+      ventasMes,
+      recientes,
+      pedidosConPagos,
+      insumos,
+      solicitudesNuevas,
+    ] = await Promise.all([
+      this.prisma.cliente.count(),
+      this.prisma.producto.count({ where: { activo: true } }),
+      this.prisma.pedido.groupBy({ by: ['estado'], _count: true }),
+      this.prisma.pedido.aggregate({
+        where: { fecha: { gte: inicioMes }, ...SOLO_VENTAS },
+        _sum: { total: true },
+        _count: true,
+      }),
+      this.prisma.pedido.findMany({
+        take: 5,
+        orderBy: { fecha: 'desc' },
+        include: { cliente: { select: { nombreORazonSocial: true } } },
+      }),
+      // Para "por cobrar": pedidos confirmados con sus pagos.
+      this.prisma.pedido.findMany({
+        where: SOLO_VENTAS,
+        select: { total: true, pagos: { select: { monto: true } } },
+      }),
+      this.prisma.insumo.findMany({
+        select: { nombre: true, stockActual: true, stockMinimo: true },
+      }),
+      this.prisma.solicitud.count({ where: { estado: 'NUEVA' } }),
+    ]);
 
     // Normalizamos: todos los estados presentes, con 0 si no hay ninguno.
     const pedidosPorEstado: Record<EstadoPedido, number> = {
@@ -45,9 +62,59 @@ export class DashboardService {
       pedidosPorEstado[g.estado] = g._count;
     }
 
+    const cero = new Prisma.Decimal(0);
+
+    // Saldo pendiente de cobro (total − pagado, solo si queda saldo).
+    const porCobrar = pedidosConPagos.reduce((acc, p) => {
+      const pagado = p.pagos.reduce((a, x) => a.add(x.monto), cero);
+      const saldo = p.total.sub(pagado);
+      return saldo.greaterThan(0) ? acc.add(saldo) : acc;
+    }, cero);
+
+    // Insumos en o por debajo del stock mínimo.
+    const enAlerta = insumos.filter((i) =>
+      i.stockActual.lessThanOrEqualTo(i.stockMinimo),
+    );
+    const bajoStock = {
+      cantidad: enAlerta.length,
+      nombres: enAlerta.slice(0, 5).map((i) => i.nombre),
+    };
+
+    // Finanzas del mes: información sensible → solo para ADMIN.
+    let finanzasMes: {
+      ingresos: Prisma.Decimal;
+      egresos: Prisma.Decimal;
+      utilidad: Prisma.Decimal;
+    } | null = null;
+    if (rol === 'ADMIN') {
+      const [pagosMes, gastosMes, personalMes] = await Promise.all([
+        this.prisma.pago.aggregate({
+          _sum: { monto: true },
+          where: { fecha: { gte: inicioMes } },
+        }),
+        this.prisma.gasto.aggregate({
+          _sum: { monto: true },
+          where: { fecha: { gte: inicioMes } },
+        }),
+        this.prisma.pagoPersonal.aggregate({
+          _sum: { monto: true },
+          where: { fecha: { gte: inicioMes } },
+        }),
+      ]);
+      const ingresos = pagosMes._sum.monto ?? cero;
+      const egresos = (gastosMes._sum.monto ?? cero).add(
+        personalMes._sum.monto ?? cero,
+      );
+      finanzasMes = { ingresos, egresos, utilidad: ingresos.sub(egresos) };
+    }
+
     return {
       totalClientes,
       productosActivos,
+      porCobrar,
+      bajoStock,
+      solicitudesNuevas,
+      finanzasMes,
       pedidosPorEstado,
       ventasDelMes: {
         cantidad: ventasMes._count,

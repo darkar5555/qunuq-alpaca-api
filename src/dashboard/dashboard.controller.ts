@@ -1,5 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { RolUsuario } from '@prisma/client';
+import {
+  CurrentUser,
+  UsuarioAutenticado,
+} from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { DashboardService } from './dashboard.service';
 
@@ -10,8 +14,8 @@ export class DashboardController {
   constructor(private readonly dashboard: DashboardService) {}
 
   @Get('resumen')
-  resumen() {
-    return this.dashboard.resumen();
+  resumen(@CurrentUser() user: UsuarioAutenticado) {
+    return this.dashboard.resumen(user.rol);
   }
 
   @Get('ventas-por-mes')
